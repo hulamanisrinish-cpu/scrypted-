@@ -1,0 +1,22 @@
+[submodule "plugins/unifi-protect/src/unifi-protect"]
+	path = external/unifi-protect
+	url = https://github.com/koush/unifi-protect.git
+[submodule "external/ring-client-api"]
+	path = external/ring-client-api
+	url = https://github.com/koush/ring
+	branch = fork
+[submodule "plugins/vscode-typescript"]
+	path = plugins/vscode-typescript
+	url = https://github.com/koush/scrypted-vscode-typescript/
+[submodule "external/werift"]
+	path = external/werift
+	url = https://github.com/koush/werift-webrtc
+[submodule "plugins/sample-cameraprovider"]
+	path = plugins/sample-cameraprovider
+	url = https://github.com/koush/scrypted-sample-cameraprovider
+[submodule "plugins/cloud/node-nat-upnp"]
+	path = plugins/cloud/external/node-nat-upnp
+	url = https://github.com/koush/node-nat-upnp.git
+[submodule "plugins/wyze/docker-wyze-bridge"]
+	path = plugins/wyze/docker-wyze-bridge
+	url = https://github.com/koush/docker-wyze-bridge.git

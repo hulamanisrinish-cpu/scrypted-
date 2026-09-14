@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-server:
+    name: Build Server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.4.1
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Build server
+        working-directory: server
+        run: npm ci && npm run build
+
+  build-common-and-sdk:
+    name: Build Common + SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.4.1
+
+      - name: Build common
+        working-directory: common
+        run: |
+          npm install
+          npm run build
+
+      - name: Build SDK
+        working-directory: sdk
+        run: |
+          npm ci
+          npm run build
+
+  build-plugins:
+    name: Build ${{ matrix.plugin }} plugin
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: [homekit, prebuffer-mixin, mqtt, onvif]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.4.1
+
+      - name: Install common and SDK dependencies
+        run: |
+          cd common && npm install
+          cd ../sdk && npm ci
+
+      - name: Build plugin
+        working-directory: plugins/${{ matrix.plugin }}
+        run: |
+          npm ci
+          npm run build
