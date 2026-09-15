@@ -12,10 +12,11 @@ jobs:
   test_local:
     name: Test local installation on ${{ matrix.runner }}
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-latest, macos-14, windows-latest]
+        runner: [ubuntu-latest, ubuntu-24.04-arm, macos-14, macos-15-intel, windows-latest]
 
     steps:
       - name: Checkout repository
@@ -30,7 +31,13 @@ jobs:
           echo "Will test @scrypted/server@$VERSION"
 
       - name: Install scrypted server
-        uses: scryptedapp/setup-scrypted@v0.0.2
+        # setup-scrypted@v0.0.4, pinned by commit SHA.
+        uses: scryptedapp/setup-scrypted@610bd31c99dd4f1ddc2ce1a43ef1bfdfcdae50cd
         with:
-          branch: https://github.com/hulamanisrinish-cpu/scrypted-
+          # The action composes
+          # https://raw.githubusercontent.com/{repo}/{branch}/install/local/...
+          # so `repo` must be "owner/name" and `branch` a ref in that repo.
+          # Point both at this fork, pinned to the exact commit being tested.
+          repo: hulamanisrinish-cpu/scrypted-
+          branch: ${{ github.event.pull_request.head.sha || github.sha }}
           version: ${{ steps.parse_server.outputs.version }}

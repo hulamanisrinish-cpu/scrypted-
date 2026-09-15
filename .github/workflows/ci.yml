@@ -10,16 +10,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  # Keep the toolchain identical across jobs. Node 22.5+ supports require() of
+  # synchronous ESM modules, which prebuild-install (via node-abi) needs when
+  # building native modules like @scrypted/node-pty.
+  NODE_VERSION: 22.11.0
+
 jobs:
   build-server:
     name: Build Server
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.4.1
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: server/package-lock.json
 
@@ -32,10 +40,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.4.1
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: common/package-lock.json
 
       - name: Build common
         working-directory: common
@@ -52,24 +64,55 @@ jobs:
   build-plugins:
     name: Build ${{ matrix.plugin }} plugin
     runs-on: ubuntu-latest
+    needs: build-common-and-sdk
     strategy:
       fail-fast: false
-      matrix:
-        plugin: [homekit, prebuffer-mixin, mqtt, onvif]
+    matrix:
+      plugin: [homekit, prebuffer-mixin, mqtt, onvif]
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.4.1
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: plugins/${{ matrix.plugin }}/package-lock.json
 
       - name: Install common and SDK dependencies
         run: |
           cd common && npm install
           cd ../sdk && npm ci
 
+      - name: Build SDK
+        working-directory: sdk
+        run: npm run build
+
+      - name: Install werift dependencies
+        working-directory: external/werift
+        run: npm install
+
       - name: Build plugin
         working-directory: plugins/${{ matrix.plugin }}
         run: |
           npm ci
+          npm run build
+
+  build-werift:
+    name: Build werift (Node 24)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install and build werift
+        working-directory: external/werift
+        run: |
+          npm install
           npm run build
