@@ -49,19 +49,28 @@ jobs:
           cache: npm
           cache-dependency-path: sdk/package-lock.json
 
-      # Order matters: common consumes @scrypted/sdk types from sdk/dist and
-      # @koush/werift-src from external/werift, so build both first.
+      # Order matters: common's tsc reaches into TS sources from sdk/dist
+      # types, external/werift, server, and packages/auth-fetch, so every
+      # one of those needs deps installed (and sdk built) before common
+      # builds. Mirrors npm-install.sh.
+      - name: Install server and auth-fetch dependencies
+        run: |
+          cd server && npm install
+          cd ../packages/auth-fetch && npm install
+
       - name: Build SDK
         working-directory: sdk
         run: |
           npm ci
           npm run build
 
-      - name: Install and build werift
+      - name: Install werift dependencies and debug types
         working-directory: external/werift
         run: |
           npm install
-          npm run build
+          # common type-checks werift sources with noImplicitAny; werift
+          # itself doesn't ship debug's types, so hoist them here.
+          npm install --no-save @types/debug@^4.1.12
 
       - name: Build common
         working-directory: common
@@ -90,12 +99,17 @@ jobs:
 
       # The SDK build output (sdk/dist) must exist before plugins can build:
       # their build scripts invoke sdk/bin/cli.js, which requires
-      # ../dist/src/bin/scrypted-webpack.js.
+      # ../dist/src/bin/scrypted-webpack.js. Plugin file: deps also point at
+      # common and external/werift, so their deps must be installed too.
       - name: Build SDK
         working-directory: sdk
         run: |
           npm ci
           npm run build
+
+      - name: Install common dependencies
+        working-directory: common
+        run: npm install
 
       - name: Install werift dependencies
         working-directory: external/werift
