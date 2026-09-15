@@ -67,8 +67,8 @@ jobs:
     needs: build-common-and-sdk
     strategy:
       fail-fast: false
-    matrix:
-      plugin: [homekit, prebuffer-mixin, mqtt, onvif]
+      matrix:
+        plugin: [homekit, prebuffer-mixin, mqtt, onvif]
     steps:
       - uses: actions/checkout@v4
         with:
