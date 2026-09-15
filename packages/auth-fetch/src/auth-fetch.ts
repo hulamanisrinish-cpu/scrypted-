@@ -1,7 +1,11 @@
 import { HttpFetchOptions, HttpFetchResponseType, checkStatus, createHeadersArray, fetcher, getFetchMethod, hasHeader, setDefaultHttpFetchAccept, setHeader } from '../../../server/src/fetch';
-import type { Mechanism } from 'http-auth-utils';
-import type { DigestWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/digest';
-import type { BasicWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/basic';
+
+// http-auth-utils is ESM-only; from a CommonJS compilation, its types must be
+// referenced via import() type queries instead of static import statements
+// (which would require() it). Runtime usage below already uses await import().
+type Mechanism = import('http-auth-utils').Mechanism;
+type DigestWWWAuthenticateData = import('http-auth-utils/dist/mechanisms/digest').DigestWWWAuthenticateData;
+type BasicWWWAuthenticateData = import('http-auth-utils/dist/mechanisms/basic').BasicWWWAuthenticateData;
 
 export interface AuthFetchCredentialState {
     username: string;
