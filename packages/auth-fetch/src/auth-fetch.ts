@@ -1,11 +1,15 @@
 import { HttpFetchOptions, HttpFetchResponseType, checkStatus, createHeadersArray, fetcher, getFetchMethod, hasHeader, setDefaultHttpFetchAccept, setHeader } from '../../../server/src/fetch';
 
-// http-auth-utils is ESM-only; from a CommonJS compilation, its types must be
-// referenced via import() type queries instead of static import statements
-// (which would require() it). Runtime usage below already uses await import().
-type Mechanism = import('http-auth-utils').Mechanism;
-type DigestWWWAuthenticateData = import('http-auth-utils/dist/mechanisms/digest').DigestWWWAuthenticateData;
-type BasicWWWAuthenticateData = import('http-auth-utils/dist/mechanisms/basic').BasicWWWAuthenticateData;
+// http-auth-utils is ESM-only ("type": "module"), so Node16 module resolution
+// flags even these type-only imports from a CommonJS file with TS1479 — even
+// though import type emits no require call. Runtime usage below correctly uses
+// await import(). The errors are expected and suppressed.
+// @ts-expect-error http-auth-utils is ESM-only
+import type { Mechanism } from 'http-auth-utils';
+// @ts-expect-error http-auth-utils is ESM-only
+import type { DigestWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/digest';
+// @ts-expect-error http-auth-utils is ESM-only
+import type { BasicWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/basic';
 
 export interface AuthFetchCredentialState {
     username: string;
