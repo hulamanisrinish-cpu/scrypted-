@@ -95,7 +95,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: plugins/${{ matrix.plugin }}/package-lock.json
+          cache-dependency-path: plugins/${{ matrix.plugin }}/package.json
 
       # The SDK build output (sdk/dist) must exist before plugins can build:
       # their build scripts invoke sdk/bin/cli.js, which requires
@@ -119,14 +119,19 @@ jobs:
       # import of rtp-forwarders), so webrtc's node_modules (@scrypted/common,
       # @scrypted/server, @scrypted/sdk links) must exist. Mirrors
       # npm-install.sh, which installs webrtc + homekit together.
+      # SCRYPTED_PYTHON_PATH skips @scrypted/server's postinstall (portable
+      # python download) — server's own deps (incl. py) aren't installed in
+      # this context.
       - name: Install webrtc plugin dependencies
         if: matrix.plugin == 'homekit'
         working-directory: plugins/webrtc
         run: npm install
+        env:
+          SCRYPTED_PYTHON_PATH: /usr/bin/python3
 
-      # npm install, not npm ci: several plugin lockfiles are stale (they
-      # record @scrypted/sdk@0.3.5 from an old repo layout, so npm ci links
-      # bins that no longer exist -> "scrypted-webpack: not found").
+      # npm install, not npm ci: plugin lockfiles can drift from the
+      # fast-moving file: deps (sdk/common/server), and npm faithfully
+      # installs stale bin mappings ("scrypted-webpack: not found").
       # Upstream's own build-plugins-changed.yml uses npm install too.
       - name: Build plugin
         working-directory: plugins/${{ matrix.plugin }}
