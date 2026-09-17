@@ -1,15 +1,34 @@
 import { HttpFetchOptions, HttpFetchResponseType, checkStatus, createHeadersArray, fetcher, getFetchMethod, hasHeader, setDefaultHttpFetchAccept, setHeader } from '../../../server/src/fetch';
 
-// http-auth-utils is ESM-only ("type": "module"), so Node16 module resolution
-// flags even these type-only imports from a CommonJS file with TS1479 — even
-// though import type emits no require call. Runtime usage below correctly uses
-// await import(). The errors are expected and suppressed.
-// @ts-expect-error http-auth-utils is ESM-only
-import type { Mechanism } from 'http-auth-utils';
-// @ts-expect-error http-auth-utils is ESM-only
-import type { DigestWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/digest';
-// @ts-expect-error http-auth-utils is ESM-only
-import type { BasicWWWAuthenticateData } from 'http-auth-utils/dist/mechanisms/basic';
+// http-auth-utils is ESM-only ("type": "module") and this package compiles as
+// CommonJS, so its types cannot be statically imported — not even as
+// import type (TS1479). The package is only loaded at runtime via await
+// import(); the local structural types below mirror the declarations this
+// file needs, without referencing the ESM package in type position (which
+// would also leak ESM-only specifiers into the generated .d.ts).
+interface Mechanism {
+    type: string;
+    parseWWWAuthenticateRest(rest: string): Record<string, string>;
+    buildWWWAuthenticateRest(data: Record<string, string>): string;
+    parseAuthorizationRest(rest: string): Record<string, string>;
+    buildAuthorizationRest(data: Record<string, string>): string;
+}
+
+interface DigestWWWAuthenticateData {
+    realm: string;
+    domain?: string;
+    nonce: string;
+    opaque?: string;
+    stale?: 'true' | 'false';
+    algorithm?: string;
+    qop?: string;
+    charset?: 'UTF-8';
+    userhash?: 'true' | 'false';
+}
+
+interface BasicWWWAuthenticateData {
+    realm: string;
+}
 
 export interface AuthFetchCredentialState {
     username: string;
@@ -147,7 +166,11 @@ export function createAuthFetch<B, M>(
         if (typeof authenticateHeaders === 'string')
             authenticateHeaders = [authenticateHeaders];
 
-const { BASIC, DIGEST, parseWWWAuthenticateHeader } = await import('http-auth-utils');
+        const {
+            BASIC,
+            DIGEST,
+            parseWWWAuthenticateHeader,
+        } = await import('http-auth-utils');
         const parsedHeaders: DigestHeader[] = authenticateHeaders.map(h => parseWWWAuthenticateHeader(h) as unknown as DigestHeader);
 
         const digest = parsedHeaders.find(p => p.type === 'Digest');
