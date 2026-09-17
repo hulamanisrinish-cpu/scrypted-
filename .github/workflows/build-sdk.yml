@@ -20,6 +20,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.4.1
+          # A pinned 22.4.1 breaks typedoc's build step with ERR_REQUIRE_ESM
+          # (it can't require() the ESM-only node-abi chain). 22.12+ enables
+          # require() of synchronous ESM modules by default.
+          node-version: 22
       - run: npm ci
       - run: npm run build

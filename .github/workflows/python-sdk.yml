@@ -33,7 +33,11 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    if: github.event_name == 'workflow_dispatch'
+    # This fork cannot publish to the upstream-owned scrypted-sdk project.
+    # Trusted publishing fails with invalid-publisher until the PyPI project
+    # adds this repo as a trusted publisher. Flip this repo variable (and
+    # configure the PyPI side) to actually publish.
+    if: github.event_name == 'workflow_dispatch' && vars.ENABLE_PYPI_PUBLISH == 'true'
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
