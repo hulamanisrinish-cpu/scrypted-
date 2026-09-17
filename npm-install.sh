@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 echo ######################################
 echo "Setting up popular plugins."
 echo "Additional will need npm install manually."

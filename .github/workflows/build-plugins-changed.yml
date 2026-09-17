@@ -19,13 +19,17 @@ jobs:
             fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          # Node 18 is EOL and cannot require() synchronous ESM modules;
+          # server's node-pty install and typedoc's build step both die with
+          # ERR_REQUIRE_ESM on it. 22.12+ handles both.
+          node-version: 22
 
       - name: Set up base packages
         run: ./npm-install.sh
 
       - name: Build changed plugins
         run: |
+            set -euo pipefail
             # Get the list of changed directories in /plugins
             changed_dirs=$(git diff --name-only HEAD^ HEAD ./plugins | awk -F/ '{print $2}' | uniq)
             
